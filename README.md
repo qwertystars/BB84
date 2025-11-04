@@ -220,6 +220,35 @@ docker-compose up --build
 - Get quantum circuit visualization for specific round
 - Returns: Circuit image (base64) and round details
 
+## 🔒 Security
+
+### Known Vulnerabilities and Mitigations
+
+This application uses the following dependency versions with known vulnerabilities:
+
+1. **FastAPI 0.109.0**: Has a ReDoS vulnerability in Content-Type header processing (CVE). Upgrade to 0.109.1+ recommended.
+   - **Mitigation**: The application doesn't parse untrusted Content-Type headers in a way that would trigger the ReDoS.
+   - **Recommended Action**: Update to FastAPI 0.115.6 or later in production.
+
+2. **Qiskit 0.45.3**: Has vulnerabilities related to malicious QPY file parsing.
+   - **Mitigation**: This application doesn't load QPY files from untrusted sources.
+   - **Recommended Action**: Update to Qiskit 1.4.2 or later in production.
+
+To upgrade to secure versions, update `backend/requirements.txt`:
+```
+fastapi==0.115.6
+qiskit==1.4.2
+qiskit-aer==0.15.1
+```
+
+Then reinstall dependencies:
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+**Note**: This is a demonstration/educational application. For production deployment, always use the latest patched versions of all dependencies.
+
 ## 🧪 Testing
 
 ### Backend Testing
