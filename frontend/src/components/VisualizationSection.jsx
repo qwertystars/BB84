@@ -131,7 +131,12 @@ function VisualizationSection({ data, apiBaseUrl }) {
             type="number"
             id="roundSelect"
             value={selectedRound}
-            onChange={(e) => setSelectedRound(parseInt(e.target.value))}
+            onChange={(e) => {
+              const value = parseInt(e.target.value);
+              if (!isNaN(value) && value >= 0 && value < results.alice_bits.length) {
+                setSelectedRound(value);
+              }
+            }}
             min="0"
             max={results.alice_bits.length - 1}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"

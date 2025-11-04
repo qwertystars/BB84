@@ -10,6 +10,8 @@ import io
 import base64
 from typing import List, Optional
 
+import threading
+
 app = FastAPI(title="BB84 Quantum Key Distribution Simulator")
 
 # Enable CORS for frontend
@@ -37,8 +39,10 @@ class BB84Results:
         self.qber = 0.0
         self.circuits = []
 
-# Global variable to store latest results
+# Thread-safe storage for simulation results
+# Note: For production use, consider using Redis or a database for scalability
 latest_results = None
+results_lock = threading.Lock()
 
 def prepare_bb84_qubit(bit: int, basis: str) -> QuantumCircuit:
     """
@@ -181,15 +185,19 @@ async def run_bb84(request: BB84Request):
             raise HTTPException(status_code=400, detail="noise_level must be between 0 and 1")
         
         # Run simulation
-        latest_results = simulate_bb84(request.n_qubits, request.noise_level, request.seed)
+        results = simulate_bb84(request.n_qubits, request.noise_level, request.seed)
+        
+        # Thread-safe update of global results
+        with results_lock:
+            latest_results = results
         
         return {
             "status": "success",
             "message": "BB84 simulation completed",
             "n_qubits": request.n_qubits,
             "noise_level": request.noise_level,
-            "sifted_key_length": len(latest_results.sifted_key_alice),
-            "qber": latest_results.qber
+            "sifted_key_length": len(results.sifted_key_alice),
+            "qber": results.qber
         }
     
     except Exception as e:
@@ -203,21 +211,22 @@ async def get_results():
     Returns:
         Complete simulation data including bits, bases, and measurements
     """
-    if latest_results is None:
-        raise HTTPException(status_code=404, detail="No simulation results available. Run /run_bb84 first.")
-    
-    return {
-        "alice_bits": latest_results.alice_bits,
-        "alice_bases": latest_results.alice_bases,
-        "bob_bases": latest_results.bob_bases,
-        "bob_measurements": latest_results.bob_measurements,
-        "sifted_key_alice": latest_results.sifted_key_alice,
-        "sifted_key_bob": latest_results.sifted_key_bob,
-        "matching_bases": [
-            i for i in range(len(latest_results.alice_bases))
-            if latest_results.alice_bases[i] == latest_results.bob_bases[i]
-        ]
-    }
+    with results_lock:
+        if latest_results is None:
+            raise HTTPException(status_code=404, detail="No simulation results available. Run /run_bb84 first.")
+        
+        return {
+            "alice_bits": latest_results.alice_bits,
+            "alice_bases": latest_results.alice_bases,
+            "bob_bases": latest_results.bob_bases,
+            "bob_measurements": latest_results.bob_measurements,
+            "sifted_key_alice": latest_results.sifted_key_alice,
+            "sifted_key_bob": latest_results.sifted_key_bob,
+            "matching_bases": [
+                i for i in range(len(latest_results.alice_bases))
+                if latest_results.alice_bases[i] == latest_results.bob_bases[i]
+            ]
+        }
 
 @app.get("/stats")
 async def get_stats():
@@ -227,21 +236,22 @@ async def get_stats():
     Returns:
         Statistics including QBER, key lengths, and efficiency
     """
-    if latest_results is None:
-        raise HTTPException(status_code=404, detail="No simulation results available. Run /run_bb84 first.")
-    
-    total_qubits = len(latest_results.alice_bits)
-    sifted_length = len(latest_results.sifted_key_alice)
-    efficiency = sifted_length / total_qubits if total_qubits > 0 else 0
-    
-    return {
-        "qber": latest_results.qber,
-        "total_qubits": total_qubits,
-        "sifted_key_length": sifted_length,
-        "efficiency": efficiency,
-        "matching_bases_count": sifted_length,
-        "error_count": sum([1 for a, b in zip(latest_results.sifted_key_alice, latest_results.sifted_key_bob) if a != b])
-    }
+    with results_lock:
+        if latest_results is None:
+            raise HTTPException(status_code=404, detail="No simulation results available. Run /run_bb84 first.")
+        
+        total_qubits = len(latest_results.alice_bits)
+        sifted_length = len(latest_results.sifted_key_alice)
+        efficiency = sifted_length / total_qubits if total_qubits > 0 else 0
+        
+        return {
+            "qber": latest_results.qber,
+            "total_qubits": total_qubits,
+            "sifted_key_length": sifted_length,
+            "efficiency": efficiency,
+            "matching_bases_count": sifted_length,
+            "error_count": sum([1 for a, b in zip(latest_results.sifted_key_alice, latest_results.sifted_key_bob) if a != b])
+        }
 
 @app.get("/visualize_round/{round_index}")
 async def visualize_round(round_index: int):
@@ -254,42 +264,43 @@ async def visualize_round(round_index: int):
     Returns:
         Base64-encoded PNG image of the circuit diagram
     """
-    if latest_results is None:
-        raise HTTPException(status_code=404, detail="No simulation results available. Run /run_bb84 first.")
-    
-    if round_index < 0 or round_index >= len(latest_results.circuits):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid round_index. Must be between 0 and {len(latest_results.circuits) - 1}"
-        )
-    
-    try:
-        # Get the circuit for this round
-        circuit = latest_results.circuits[round_index]
+    with results_lock:
+        if latest_results is None:
+            raise HTTPException(status_code=404, detail="No simulation results available. Run /run_bb84 first.")
         
-        # Draw circuit
-        fig, ax = plt.subplots(figsize=(8, 3))
-        circuit.draw('mpl', ax=ax)
+        if round_index < 0 or round_index >= len(latest_results.circuits):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid round_index. Must be between 0 and {len(latest_results.circuits) - 1}"
+            )
         
-        # Convert to base64
-        buffer = io.BytesIO()
-        plt.savefig(buffer, format='png', bbox_inches='tight', dpi=100)
-        buffer.seek(0)
-        image_base64 = base64.b64encode(buffer.read()).decode()
-        plt.close(fig)
+        try:
+            # Get the circuit for this round
+            circuit = latest_results.circuits[round_index]
+            
+            # Draw circuit
+            fig, ax = plt.subplots(figsize=(8, 3))
+            circuit.draw('mpl', ax=ax)
+            
+            # Convert to base64
+            buffer = io.BytesIO()
+            plt.savefig(buffer, format='png', bbox_inches='tight', dpi=100)
+            buffer.seek(0)
+            image_base64 = base64.b64encode(buffer.read()).decode()
+            plt.close(fig)
+            
+            return {
+                "round_index": round_index,
+                "alice_bit": latest_results.alice_bits[round_index],
+                "alice_basis": latest_results.alice_bases[round_index],
+                "bob_basis": latest_results.bob_bases[round_index],
+                "bob_measurement": latest_results.bob_measurements[round_index],
+                "bases_match": latest_results.alice_bases[round_index] == latest_results.bob_bases[round_index],
+                "circuit_image": f"data:image/png;base64,{image_base64}"
+            }
         
-        return {
-            "round_index": round_index,
-            "alice_bit": latest_results.alice_bits[round_index],
-            "alice_basis": latest_results.alice_bases[round_index],
-            "bob_basis": latest_results.bob_bases[round_index],
-            "bob_measurement": latest_results.bob_measurements[round_index],
-            "bases_match": latest_results.alice_bases[round_index] == latest_results.bob_bases[round_index],
-            "circuit_image": f"data:image/png;base64,{image_base64}"
-        }
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Visualization failed: {str(e)}")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Visualization failed: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
