@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { getScenarios, runSimulation } from '../api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import SimulationForm from '../components/SimulationForm'
@@ -33,7 +32,7 @@ const Simulation = () => {
           })
         }
       } catch (error) {
-        setError('Failed to load scenarios')
+        setError('Failed to load scenarios. Please check your connection.')
         console.error('Error fetching scenarios:', error)
       } finally {
         setLoadingScenarios(false)
@@ -55,6 +54,7 @@ const Simulation = () => {
     }
     setResults([])
     setCurrentResult(null)
+    setError('')
   }
 
   const handleParameterChange = (param, value) => {
@@ -72,7 +72,7 @@ const Simulation = () => {
       setCurrentResult(result)
       setResults(prev => [...prev.slice(-9), result]) // Keep last 10 results
     } catch (error) {
-      setError('Simulation failed. Please check your parameters and try again.')
+      setError('❌ Simulation failed. Please check your parameters and try again.')
       console.error('Error running simulation:', error)
     } finally {
       setLoading(false)
@@ -83,7 +83,7 @@ const Simulation = () => {
     setLoading(true)
     setError('')
     const batchResults = []
-    
+
     try {
       for (let i = 0; i < 10; i++) {
         const result = await runSimulation(selectedScenario, parameters)
@@ -92,7 +92,7 @@ const Simulation = () => {
       setResults(batchResults)
       setCurrentResult(batchResults[batchResults.length - 1])
     } catch (error) {
-      setError('Batch simulation failed. Please check your parameters and try again.')
+      setError('❌ Batch simulation failed. Please check your parameters and try again.')
       console.error('Error in batch simulation:', error)
     } finally {
       setLoading(false)
@@ -104,19 +104,38 @@ const Simulation = () => {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-2">BB84 Simulation</h1>
-        <p className="text-gray-300">Run quantum key distribution simulations with different scenarios</p>
+    <div className="space-y-8 pb-12">
+      {/* Header */}
+      <div className="text-center space-y-3">
+        <div className="inline-block text-5xl mb-2">⚛️🔬</div>
+        <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+          BB84 Quantum Simulation Lab
+        </h1>
+        <p className="text-gray-300 text-lg max-w-2xl mx-auto">
+          Configure quantum channel parameters and observe key distribution in real-time
+        </p>
       </div>
 
+      {/* Error Alert */}
       {error && (
-        <div className="card p-4 bg-red-500/20 border-red-500/50">
-          <p className="text-red-200">{error}</p>
+        <div className="card p-4 bg-red-500/20 border-red-500/50 max-w-4xl mx-auto animate-pulse">
+          <p className="text-red-200 text-center font-medium">{error}</p>
         </div>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-8">
+      {/* Info Banner */}
+      <div className="card p-4 bg-blue-500/10 border-blue-500/30 max-w-4xl mx-auto">
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">💡</span>
+          <p className="text-sm text-blue-200">
+            <strong>Tip:</strong> QBER (Quantum Bit Error Rate) above 11% indicates potential eavesdropping or excessive channel noise. 
+            Secure communication requires QBER below this threshold.
+          </p>
+        </div>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
         <SimulationForm
           scenarios={scenarios}
           selectedScenario={selectedScenario}
@@ -128,12 +147,10 @@ const Simulation = () => {
           loading={loading}
         />
 
-        {currentResult && (
-          <ResultsDisplay
-            result={currentResult}
-            results={results}
-          />
-        )}
+        <ResultsDisplay
+          result={currentResult}
+          results={results}
+        />
       </div>
     </div>
   )
