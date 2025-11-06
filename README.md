@@ -66,11 +66,37 @@ bb84-simulation/
 
 ### Prerequisites
 
-- Python 3.8+
+- Python 3.11+
 - Node.js 16+
 - npm or yarn
 
-### Backend Setup
+### Option 1: Single Service Deployment (Production - Recommended)
+
+This setup combines the frontend and backend into a single web service, perfect for deploying on platforms like Render.
+
+1. **Build the frontend:**
+```bash
+./build.sh
+```
+
+2. **Install backend dependencies:**
+```bash
+pip install -r backend/requirements.txt
+```
+
+3. **Start the combined server:**
+```bash
+cd backend
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+The application will be available at `http://localhost:8000` with both the frontend and API served from the same port.
+
+### Option 2: Separate Development Servers (Development)
+
+For local development with hot-reload:
+
+#### Backend Setup
 
 1. Navigate to the backend directory:
 ```bash
@@ -95,7 +121,7 @@ uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
 The backend API will be available at `http://localhost:8000`
 
-### Frontend Setup
+#### Frontend Setup
 
 1. Open a new terminal and navigate to the frontend directory:
 ```bash
@@ -167,6 +193,43 @@ The application provides:
 - Error handling and user feedback
 - CORS configuration for secure API access
 - Parameter bounds to prevent invalid simulations
+
+## Deployment on Render
+
+This project is configured for easy deployment on Render as a single web service.
+
+### Quick Deploy
+
+1. **Connect your GitHub repository to Render**
+   - Go to [Render Dashboard](https://dashboard.render.com/)
+   - Click "New +" and select "Web Service"
+   - Connect your GitHub repository
+
+2. **Render will automatically detect the `render.yaml` configuration**
+   - Service Name: bb84-simulator
+   - Environment: Python
+   - Build Command: `./build.sh && pip install -r backend/requirements.txt`
+   - Start Command: `cd backend && uvicorn main:app --host 0.0.0.0 --port 10000`
+
+3. **Deploy**
+   - Click "Create Web Service"
+   - Render will automatically build and deploy your application
+
+### Manual Configuration (if render.yaml is not detected)
+
+If you need to configure manually:
+- **Environment**: Python 3.11
+- **Build Command**: `./build.sh && pip install -r backend/requirements.txt`
+- **Start Command**: `cd backend && uvicorn main:app --host 0.0.0.0 --port 10000`
+- **Port**: 10000 (automatically set by Render)
+
+### Environment Variables
+
+No environment variables are required for basic deployment. The application automatically detects the production environment and uses relative URLs for API calls.
+
+### Custom Domain
+
+You can add a custom domain in the Render dashboard under "Settings" → "Custom Domain".
 
 ## Contributing
 

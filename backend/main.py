@@ -1,7 +1,11 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from typing import Dict, Any
 import uvicorn
+import os
+from pathlib import Path
 
 from models import SimulationRequest, SimulationResult, ScenariosResponse, ScenarioInfo, ScenarioType
 from simulations.ideal import simulate_ideal
@@ -18,11 +22,15 @@ app = FastAPI(
 # Add CORS middleware for frontend access
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://bb84.srijan.dpdns.org", "https://bb84-api.srijan.dpdns.org", "http://localhost:5173", "http://localhost:3000"],  # Production domains and development
+    allow_origins=["*"],  # Allow all origins for single service deployment
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Get the directory paths
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIST = BASE_DIR / "frontend" / "dist"
 
 # Simulation functions mapping
 SIMULATION_FUNCTIONS = {
@@ -32,7 +40,8 @@ SIMULATION_FUNCTIONS = {
     ScenarioType.DECOHERENCE_FREE: simulate_decoherence_free,
 }
 
-@app.get("/", response_model=Dict[str, str])
+@app.get("/api", response_model=Dict[str, str])
+@app.get("/api/", response_model=Dict[str, str])
 async def root():
     """Root endpoint with API information."""
     return {
@@ -132,5 +141,38 @@ async def run_simulation_get(scenario: ScenarioType, qubit_count: int = 100, err
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Simulation failed: {str(e)}")
 
+# Mount static files if frontend dist exists
+if FRONTEND_DIST.exists():
+    # Mount static assets (JS, CSS, images, etc.)
+    app.mount("/assets", StaticFiles(directory=str(FRONTEND_DIST / "assets")), name="assets")
+
+    # Serve index.html for all other routes (SPA routing)
+    @app.get("/{full_path:path}")
+    async def serve_spa(full_path: str):
+        """Serve the React SPA for all non-API routes."""
+        # If it's an API route, let FastAPI handle it normally
+        if full_path.startswith("api/") or full_path in ["scenarios", "docs", "redoc", "openapi.json"]:
+            raise HTTPException(status_code=404, detail="Not found")
+
+        # Check if the requested file exists in the dist directory
+        file_path = FRONTEND_DIST / full_path
+        if file_path.is_file():
+            return FileResponse(file_path)
+
+        # Otherwise, serve index.html for client-side routing
+        index_path = FRONTEND_DIST / "index.html"
+        if index_path.exists():
+            return FileResponse(index_path)
+        else:
+            raise HTTPException(status_code=404, detail="Frontend not built")
+else:
+    @app.get("/")
+    async def frontend_not_built():
+        return {
+            "warning": "Frontend not built",
+            "message": "Please build the frontend first by running: cd frontend && npm install && npm run build"
+        }
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)
