@@ -43,7 +43,15 @@ SIMULATION_FUNCTIONS = {
 @app.get("/api", response_model=Dict[str, str])
 @app.get("/api/", response_model=Dict[str, str])
 async def root():
-    """Root endpoint with API information."""
+    """
+    Provide basic API metadata for the root `/api` endpoint.
+    
+    Returns:
+        A dictionary with keys:
+        - `message`: brief API name or description.
+        - `version`: API version string.
+        - `docs`: path to the API documentation.
+    """
     return {
         "message": "BB84 Quantum Key Distribution Simulator API",
         "version": "1.0.0",
@@ -119,7 +127,22 @@ async def run_simulation(scenario: ScenarioType, request: SimulationRequest):
 
 @app.get("/simulate/{scenario}", response_model=SimulationResult)
 async def run_simulation_get(scenario: ScenarioType, qubit_count: int = 100, error_rate: float = 0.0, eve_fraction: float = 0.0):
-    """Run a BB84 simulation using GET request with query parameters."""
+    """
+    Run a BB84 simulation for the given scenario using query parameters.
+    
+    Parameters:
+        scenario (ScenarioType): The scenario to simulate (maps to a specific simulation implementation).
+        qubit_count (int): Number of qubits to simulate (default 100).
+        error_rate (float): Channel error rate between 0.0 and 1.0 (default 0.0).
+        eve_fraction (float): Fraction of transmissions intercepted by an eavesdropper between 0.0 and 1.0 (default 0.0).
+    
+    Returns:
+        SimulationResult: The simulation outcome packaged as a SimulationResult model.
+    
+    Raises:
+        HTTPException: with status 400 if the scenario is invalid.
+        HTTPException: with status 500 if the simulation fails.
+    """
     try:
         if scenario not in SIMULATION_FUNCTIONS:
             raise HTTPException(status_code=400, detail="Invalid scenario type")
@@ -149,7 +172,20 @@ if FRONTEND_DIST.exists():
     # Serve index.html for all other routes (SPA routing)
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
-        """Serve the React SPA for all non-API routes."""
+        """
+        Serve the frontend Single Page Application for non-API routes.
+        
+        If the requested path corresponds to a static file in the frontend distribution, that file is returned. If not, index.html is returned to enable client-side routing. Requests that target API paths or when the frontend is not built result in a 404 response.
+        
+        Parameters:
+            full_path (str): The URL path portion requested by the client (may be empty).
+        
+        Returns:
+            FileResponse: The static file to serve (requested asset or index.html).
+        
+        Raises:
+            HTTPException: 404 if the path appears to be an API route or if the frontend distribution is missing.
+        """
         # If it's an API route, let FastAPI handle it normally
         if full_path.startswith("api/") or full_path in ["scenarios", "docs", "redoc", "openapi.json"]:
             raise HTTPException(status_code=404, detail="Not found")
@@ -168,6 +204,14 @@ if FRONTEND_DIST.exists():
 else:
     @app.get("/")
     async def frontend_not_built():
+        """
+        Inform clients that the frontend build is missing and provide instructions to build it.
+        
+        Returns:
+            dict: JSON object with two keys:
+                - "warning": short title indicating the frontend is not built.
+                - "message": a human-readable instruction string describing how to build the frontend (e.g., "Please build the frontend first by running: cd frontend && npm install && npm run build").
+        """
         return {
             "warning": "Frontend not built",
             "message": "Please build the frontend first by running: cd frontend && npm install && npm run build"
