@@ -43,7 +43,8 @@ const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="mt-8 pt-6 border-t border-white/10 text-center text-sm text-gray-500">
-          <p>© 2024 BB84 QKD Simulator | Built for Quantum Cryptography Education</p>
+          <p>© 2025 BB84 QKD Simulator | Built for Quantum Cryptography Education</p>
+          <p className="mt-2">Made by Srijan Guchhait (25BCE5104)</p>
           <p className="mt-2">
             <span className="text-blue-400">◆</span> Powered by Quantum Mechanics <span className="text-purple-400">◆</span>
           </p>
