@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: bb84-simulator
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "./build.sh && pip install -r backend/requirements.txt"
+    startCommand: "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0

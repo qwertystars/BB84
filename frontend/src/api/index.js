@@ -5,9 +5,15 @@ const getBackendUrls = () => {
   if (import.meta.env.VITE_API_URL) {
     return [import.meta.env.VITE_API_URL]
   }
-  
-  // Always use production API only
-  return ['https://bb84-api.srijan.dpdns.org']
+
+  // In production (when served from the same domain), use relative URLs
+  // This allows the frontend and backend to be deployed as a single service
+  if (import.meta.env.PROD) {
+    return [window.location.origin]
+  }
+
+  // In development, use localhost backend
+  return ['http://localhost:8000']
 }
 
 const createApiWithFallback = async () => {

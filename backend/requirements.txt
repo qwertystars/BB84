@@ -5,3 +5,4 @@ numpy>=1.26.0
 python-multipart>=0.0.6
 qiskit>=0.45.0
 qiskit-aer>=0.13.0
+aiofiles>=23.2.1
