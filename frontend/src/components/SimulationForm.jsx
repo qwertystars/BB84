@@ -10,29 +10,48 @@ const SimulationForm = ({
 }) => {
   const currentScenario = scenarios.find(s => s.id === selectedScenario)
 
+  const scenarioIcons = {
+    'ideal': '🔒',
+    'error-only': '📡',
+    'error-eve': '👁️',
+    'decoherence-free': '✨'
+  }
+
   return (
     <div className="card p-6 space-y-6">
-      <h2 className="text-2xl font-bold">Simulation Parameters</h2>
-      
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium mb-2">Scenario</label>
+      <div className="flex items-center gap-3">
+        <span className="text-3xl">⚙️</span>
+        <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+          Simulation Parameters
+        </h2>
+      </div>
+
+      <div className="space-y-5">
+        {/* Scenario Selection */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-300 flex items-center gap-2">
+            <span>🎭</span> Scenario Type
+          </label>
           <select
             value={selectedScenario}
             onChange={(e) => onScenarioChange(e.target.value)}
-            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-white/40 transition-all"
           >
             {scenarios.map(scenario => (
-              <option key={scenario.id} value={scenario.id} className="bg-gray-800">
-                {scenario.name}
+              <option key={scenario.id} value={scenario.id} className="bg-gray-900">
+                {scenarioIcons[scenario.id]} {scenario.name}
               </option>
             ))}
           </select>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Qubit Count: {parameters.qubit_count}
+        {/* Qubit Count Slider */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-300 flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <span>⚛️</span> Qubit Count
+            </span>
+            <span className="text-lg font-bold text-blue-400">{parameters.qubit_count}</span>
           </label>
           <input
             type="range"
@@ -40,17 +59,22 @@ const SimulationForm = ({
             max={currentScenario?.parameters.qubit_count.max || 1000}
             value={parameters.qubit_count}
             onChange={(e) => onParameterChange('qubit_count', parseInt(e.target.value))}
-            className="w-full"
+            className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider-thumb"
           />
-          <div className="flex justify-between text-xs text-gray-400 mt-1">
-            <span>{currentScenario?.parameters.qubit_count.min || 10}</span>
-            <span>{currentScenario?.parameters.qubit_count.max || 1000}</span>
+          <div className="flex justify-between text-xs text-gray-400">
+            <span>{currentScenario?.parameters.qubit_count.min || 10} qubits</span>
+            <span>{currentScenario?.parameters.qubit_count.max || 1000} qubits</span>
           </div>
+          <p className="text-xs text-gray-500">Higher qubit count increases key length but takes longer to simulate</p>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Error Rate: {(parameters.error_rate * 100).toFixed(1)}%
+        {/* Error Rate Slider */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-300 flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <span>📊</span> Channel Error Rate
+            </span>
+            <span className="text-lg font-bold text-purple-400">{(parameters.error_rate * 100).toFixed(1)}%</span>
           </label>
           <input
             type="range"
@@ -59,18 +83,23 @@ const SimulationForm = ({
             step={0.01}
             value={parameters.error_rate}
             onChange={(e) => onParameterChange('error_rate', parseFloat(e.target.value))}
-            className="w-full"
+            className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider-thumb"
             disabled={currentScenario?.parameters.error_rate.min === currentScenario?.parameters.error_rate.max}
           />
-          <div className="flex justify-between text-xs text-gray-400 mt-1">
+          <div className="flex justify-between text-xs text-gray-400">
             <span>{(currentScenario?.parameters.error_rate.min || 0) * 100}%</span>
             <span>{(currentScenario?.parameters.error_rate.max || 0.5) * 100}%</span>
           </div>
+          <p className="text-xs text-gray-500">Simulates noise in the quantum channel during transmission</p>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">
-            Eve Fraction: {(parameters.eve_fraction * 100).toFixed(1)}%
+        {/* Eve Fraction Slider */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-gray-300 flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <span>👤</span> Eavesdropper Fraction (Eve)
+            </span>
+            <span className="text-lg font-bold text-pink-400">{(parameters.eve_fraction * 100).toFixed(1)}%</span>
           </label>
           <input
             type="range"
@@ -79,37 +108,63 @@ const SimulationForm = ({
             step={0.01}
             value={parameters.eve_fraction}
             onChange={(e) => onParameterChange('eve_fraction', parseFloat(e.target.value))}
-            className="w-full"
+            className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer slider-thumb"
             disabled={currentScenario?.parameters.eve_fraction.min === currentScenario?.parameters.eve_fraction.max}
           />
-          <div className="flex justify-between text-xs text-gray-400 mt-1">
+          <div className="flex justify-between text-xs text-gray-400">
             <span>{(currentScenario?.parameters.eve_fraction.min || 0) * 100}%</span>
             <span>{(currentScenario?.parameters.eve_fraction.max || 1) * 100}%</span>
           </div>
+          <p className="text-xs text-gray-500">Percentage of qubits intercepted by an eavesdropper (intercept-resend attack)</p>
         </div>
       </div>
 
-      <div className="space-y-3">
+      {/* Action Buttons */}
+      <div className="space-y-3 pt-2">
         <button
           onClick={onRunSimulation}
           disabled={loading}
-          className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {loading ? 'Running...' : 'Run Simulation'}
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <span>Running Simulation...</span>
+            </>
+          ) : (
+            <>
+              <span>▶️</span>
+              <span>Run Single Simulation</span>
+            </>
+          )}
         </button>
         <button
           onClick={onRunBatchSimulation}
           disabled={loading}
-          className="w-full btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full btn-secondary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
-          {loading ? 'Running Batch...' : 'Run 10 Simulations'}
+          {loading ? (
+            <>
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <span>Running Batch...</span>
+            </>
+          ) : (
+            <>
+              <span>📊</span>
+              <span>Run 10 Simulations (Batch)</span>
+            </>
+          )}
         </button>
       </div>
 
+      {/* Scenario Description */}
       {currentScenario && (
-        <div className="text-sm text-gray-400 pt-4 border-t border-white/10">
-          <h3 className="font-medium mb-2">Scenario Description:</h3>
-          <p>{currentScenario.description}</p>
+        <div className="text-sm pt-4 border-t border-white/10 space-y-2">
+          <h3 className="font-medium text-gray-300 flex items-center gap-2">
+            <span>{scenarioIcons[currentScenario.id]}</span>
+            <span>About This Scenario:</span>
+          </h3>
+          <p className="text-gray-400 leading-relaxed">{currentScenario.description}</p>
         </div>
       )}
     </div>
