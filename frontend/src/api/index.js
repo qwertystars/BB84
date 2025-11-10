@@ -94,6 +94,16 @@ export const runSimulation = async (scenario, params) => {
   }
 }
 
+export const runDetailedSimulation = async (params) => {
+  try {
+    const api = await getApi()
+    const response = await api.post('/simulate/detailed', params)
+    return response.data
+  } catch (error) {
+    throw error
+  }
+}
+
 export default {
   get: async (...args) => {
     const api = await getApi()

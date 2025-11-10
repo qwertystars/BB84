@@ -1,6 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
 
-const ResultsDisplay = ({ result, results }) => {
+const ResultsDisplay = ({ result, results, onShowDetailed, loadingDetailed, showAllQubits, setShowAllQubits }) => {
   if (!result) {
     return (
       <div className="card p-8 text-center space-y-4">
@@ -31,6 +31,15 @@ const ResultsDisplay = ({ result, results }) => {
   }
 
   const security = getSecurityStatus(result.qber)
+
+  const handleShowDetailed = () => {
+    const params = {
+      qubit_count: result.qubit_count,
+      error_rate: result.error_rate,
+      eve_fraction: result.eve_fraction
+    }
+    onShowDetailed(params, showAllQubits)
+  }
 
   return (
     <div className="space-y-6">
@@ -77,6 +86,44 @@ const ResultsDisplay = ({ result, results }) => {
           <div className="bg-black/40 rounded-lg p-4 font-mono text-sm break-all border border-blue-500/30 hover:border-blue-500/50 transition-colors">
             {result.sifted_key}
           </div>
+        </div>
+
+        {/* Detailed Simulation Button */}
+        <div className="pt-2 space-y-3">
+          {/* Show All Qubits Checkbox */}
+          <div className="flex items-center justify-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              id="showAllQubits"
+              checked={showAllQubits}
+              onChange={(e) => setShowAllQubits(e.target.checked)}
+              className="w-4 h-4 rounded border-white/20 bg-white/10 text-blue-500 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            />
+            <label htmlFor="showAllQubits" className="text-gray-300 cursor-pointer select-none">
+              Show all {result.qubit_count} qubits {!showAllQubits && `(default: first 20)`}
+            </label>
+          </div>
+
+          <button
+            onClick={handleShowDetailed}
+            disabled={loadingDetailed}
+            className="w-full btn-secondary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loadingDetailed ? (
+              <>
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <span>Loading Detailed View...</span>
+              </>
+            ) : (
+              <>
+                <span>🔬</span>
+                <span>Show Step-by-Step Detailed Simulation</span>
+              </>
+            )}
+          </button>
+          <p className="text-xs text-gray-500 text-center">
+            See how each qubit is processed through the BB84 protocol
+          </p>
         </div>
 
         {/* Summary Details */}

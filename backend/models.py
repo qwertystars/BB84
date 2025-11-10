@@ -12,6 +12,7 @@ class SimulationRequest(BaseModel):
     qubit_count: int = Field(default=100, ge=10, le=1000, description="Number of qubits to simulate")
     error_rate: Optional[float] = Field(default=0.0, ge=0.0, le=0.5, description="Channel error rate")
     eve_fraction: Optional[float] = Field(default=0.5, ge=0.0, le=1.0, description="Fraction of qubits intercepted by Eve")
+    show_all: Optional[bool] = Field(default=False, description="Show all qubits in detailed simulation (default: limit to 20)")
 
 class SimulationResult(BaseModel):
     scenario: str

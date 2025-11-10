@@ -12,6 +12,7 @@ from simulations.ideal import simulate_ideal
 from simulations.error_only import simulate_error_only
 from simulations.error_with_eve import simulate_error_with_eve
 from simulations.decoherence_free import simulate_decoherence_free
+from simulations.detailed import simulate_detailed
 
 app = FastAPI(
     title="BB84 Quantum Key Distribution Simulator",
@@ -104,6 +105,19 @@ async def get_scenarios():
         ),
     ]
     return ScenariosResponse(scenarios=scenarios)
+
+@app.post("/simulate/detailed", response_model=Dict[str, Any])
+async def run_detailed_simulation(request: SimulationRequest):
+    """
+    Run a detailed step-by-step BB84 simulation showing each qubit's journey.
+    Limited to 20 qubits for readability.
+    """
+    try:
+        params = request.model_dump()
+        result = simulate_detailed(**params)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Detailed simulation failed: {str(e)}")
 
 @app.post("/simulate/{scenario}", response_model=SimulationResult)
 async def run_simulation(scenario: ScenarioType, request: SimulationRequest):
