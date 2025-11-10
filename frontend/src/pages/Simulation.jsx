@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
-import { getScenarios, runSimulation } from '../api'
+import { getScenarios, runSimulation, runDetailedSimulation } from '../api'
 import LoadingSpinner from '../components/LoadingSpinner'
 import SimulationForm from '../components/SimulationForm'
 import ResultsDisplay from '../components/ResultsDisplay'
+import DetailedSimulation from '../components/DetailedSimulation'
 
 const Simulation = () => {
   const [scenarios, setScenarios] = useState([])
@@ -17,6 +18,9 @@ const Simulation = () => {
   const [loading, setLoading] = useState(false)
   const [loadingScenarios, setLoadingScenarios] = useState(true)
   const [error, setError] = useState('')
+  const [detailedData, setDetailedData] = useState(null)
+  const [loadingDetailed, setLoadingDetailed] = useState(false)
+  const [showDetailed, setShowDetailed] = useState(false)
 
   useEffect(() => {
     const fetchScenarios = async () => {
@@ -99,6 +103,20 @@ const Simulation = () => {
     }
   }
 
+  const handleShowDetailed = async (params) => {
+    setLoadingDetailed(true)
+    try {
+      const data = await runDetailedSimulation(params)
+      setDetailedData(data)
+      setShowDetailed(true)
+    } catch (error) {
+      setError('❌ Failed to run detailed simulation. Please try again.')
+      console.error('Failed to run detailed simulation:', error)
+    } finally {
+      setLoadingDetailed(false)
+    }
+  }
+
   if (loadingScenarios) {
     return <LoadingSpinner />
   }
@@ -150,8 +168,17 @@ const Simulation = () => {
         <ResultsDisplay
           result={currentResult}
           results={results}
+          onShowDetailed={handleShowDetailed}
+          loadingDetailed={loadingDetailed}
         />
       </div>
+
+      {/* Detailed Simulation - Full Width */}
+      {showDetailed && detailedData && (
+        <div className="max-w-7xl mx-auto">
+          <DetailedSimulation detailedData={detailedData} />
+        </div>
+      )}
     </div>
   )
 }

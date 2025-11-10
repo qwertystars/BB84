@@ -1,12 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
-import { useState } from 'react'
-import { runDetailedSimulation } from '../api'
-import DetailedSimulation from './DetailedSimulation'
 
-const ResultsDisplay = ({ result, results }) => {
-  const [detailedData, setDetailedData] = useState(null)
-  const [loadingDetailed, setLoadingDetailed] = useState(false)
-  const [showDetailed, setShowDetailed] = useState(false)
+const ResultsDisplay = ({ result, results, onShowDetailed, loadingDetailed }) => {
   if (!result) {
     return (
       <div className="card p-8 text-center space-y-4">
@@ -38,22 +32,13 @@ const ResultsDisplay = ({ result, results }) => {
 
   const security = getSecurityStatus(result.qber)
 
-  const handleShowDetailed = async () => {
-    setLoadingDetailed(true)
-    try {
-      const params = {
-        qubit_count: Math.min(result.qubit_count, 20), // Limit to 20 for readability
-        error_rate: result.error_rate,
-        eve_fraction: result.eve_fraction
-      }
-      const data = await runDetailedSimulation(params)
-      setDetailedData(data)
-      setShowDetailed(true)
-    } catch (error) {
-      console.error('Failed to run detailed simulation:', error)
-    } finally {
-      setLoadingDetailed(false)
+  const handleShowDetailed = () => {
+    const params = {
+      qubit_count: Math.min(result.qubit_count, 20), // Limit to 20 for readability
+      error_rate: result.error_rate,
+      eve_fraction: result.eve_fraction
     }
+    onShowDetailed(params)
   }
 
   return (
@@ -236,11 +221,6 @@ const ResultsDisplay = ({ result, results }) => {
             </ResponsiveContainer>
           </div>
         </div>
-      )}
-
-      {/* Detailed Simulation Display */}
-      {showDetailed && detailedData && (
-        <DetailedSimulation detailedData={detailedData} />
       )}
     </div>
   )

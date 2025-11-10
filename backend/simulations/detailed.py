@@ -47,12 +47,19 @@ def simulate_detailed(qubit_count: int = 10, error_rate: float = 0.0, eve_fracti
     final_bits[channel_errors] = 1 - final_bits[channel_errors]
 
     # Step 5: Bob measures
-    bob_bits = final_bits.copy()
-
-    # Step 6: Basis matching
+    # CRITICAL: When Bob uses the wrong basis, his measurement is RANDOM!
+    bob_bits = np.zeros(qubit_count, dtype=int)
     bases_match = alice_bases == bob_bases
 
-    # Step 7: Determine correctness
+    for i in range(qubit_count):
+        if bases_match[i]:
+            # Correct basis: Bob gets the transmitted bit (with any channel/Eve errors)
+            bob_bits[i] = final_bits[i]
+        else:
+            # Wrong basis: Bob gets a RANDOM bit (quantum mechanics!)
+            bob_bits[i] = np.random.randint(0, 2)
+
+    # Step 6: Determine correctness
     bits_match = alice_bits == bob_bits
 
     # Create detailed qubit information
