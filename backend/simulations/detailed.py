@@ -6,17 +6,22 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import generate_random_bits, generate_random_bases, sift_key, calculate_qber
 import time
 
-def simulate_detailed(qubit_count: int = 10, error_rate: float = 0.0, eve_fraction: float = 0.0, **kwargs) -> Dict[str, Any]:
+def simulate_detailed(qubit_count: int = 10, error_rate: float = 0.0, eve_fraction: float = 0.0, show_all: bool = False, **kwargs) -> Dict[str, Any]:
     """
     Generate a detailed step-by-step simulation of the BB84 protocol.
     Shows how each qubit is processed through the protocol.
 
-    Limited to max 20 qubits for readability.
+    Args:
+        qubit_count: Number of qubits to simulate
+        error_rate: Channel error rate
+        eve_fraction: Fraction of qubits Eve intercepts
+        show_all: If False, limit to 20 qubits for readability. If True, show all qubits.
     """
     start_time = time.time()
 
-    # Limit to 20 qubits for detailed view
-    qubit_count = min(qubit_count, 20)
+    # Limit to 20 qubits for detailed view unless show_all is True
+    if not show_all:
+        qubit_count = min(qubit_count, 20)
 
     # Step 1: Alice generates random bits and bases
     alice_bits = generate_random_bits(qubit_count)

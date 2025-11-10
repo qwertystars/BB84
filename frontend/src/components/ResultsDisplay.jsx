@@ -1,6 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar } from 'recharts'
 
-const ResultsDisplay = ({ result, results, onShowDetailed, loadingDetailed }) => {
+const ResultsDisplay = ({ result, results, onShowDetailed, loadingDetailed, showAllQubits, setShowAllQubits }) => {
   if (!result) {
     return (
       <div className="card p-8 text-center space-y-4">
@@ -34,11 +34,11 @@ const ResultsDisplay = ({ result, results, onShowDetailed, loadingDetailed }) =>
 
   const handleShowDetailed = () => {
     const params = {
-      qubit_count: Math.min(result.qubit_count, 20), // Limit to 20 for readability
+      qubit_count: result.qubit_count,
       error_rate: result.error_rate,
       eve_fraction: result.eve_fraction
     }
-    onShowDetailed(params)
+    onShowDetailed(params, showAllQubits)
   }
 
   return (
@@ -89,7 +89,21 @@ const ResultsDisplay = ({ result, results, onShowDetailed, loadingDetailed }) =>
         </div>
 
         {/* Detailed Simulation Button */}
-        <div className="pt-2">
+        <div className="pt-2 space-y-3">
+          {/* Show All Qubits Checkbox */}
+          <div className="flex items-center justify-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              id="showAllQubits"
+              checked={showAllQubits}
+              onChange={(e) => setShowAllQubits(e.target.checked)}
+              className="w-4 h-4 rounded border-white/20 bg-white/10 text-blue-500 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+            />
+            <label htmlFor="showAllQubits" className="text-gray-300 cursor-pointer select-none">
+              Show all {result.qubit_count} qubits {!showAllQubits && `(default: first 20)`}
+            </label>
+          </div>
+
           <button
             onClick={handleShowDetailed}
             disabled={loadingDetailed}
@@ -107,7 +121,7 @@ const ResultsDisplay = ({ result, results, onShowDetailed, loadingDetailed }) =>
               </>
             )}
           </button>
-          <p className="text-xs text-gray-500 mt-2 text-center">
+          <p className="text-xs text-gray-500 text-center">
             See how each qubit is processed through the BB84 protocol
           </p>
         </div>

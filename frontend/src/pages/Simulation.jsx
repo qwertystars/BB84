@@ -21,6 +21,7 @@ const Simulation = () => {
   const [detailedData, setDetailedData] = useState(null)
   const [loadingDetailed, setLoadingDetailed] = useState(false)
   const [showDetailed, setShowDetailed] = useState(false)
+  const [showAllQubits, setShowAllQubits] = useState(false)
 
   useEffect(() => {
     const fetchScenarios = async () => {
@@ -103,10 +104,10 @@ const Simulation = () => {
     }
   }
 
-  const handleShowDetailed = async (params) => {
+  const handleShowDetailed = async (params, showAll) => {
     setLoadingDetailed(true)
     try {
-      const data = await runDetailedSimulation(params)
+      const data = await runDetailedSimulation({ ...params, show_all: showAll })
       setDetailedData(data)
       setShowDetailed(true)
     } catch (error) {
@@ -170,6 +171,8 @@ const Simulation = () => {
           results={results}
           onShowDetailed={handleShowDetailed}
           loadingDetailed={loadingDetailed}
+          showAllQubits={showAllQubits}
+          setShowAllQubits={setShowAllQubits}
         />
       </div>
 
