@@ -108,7 +108,7 @@ const DetailedSimulation = ({ detailedData }) => {
                         )}
                       </td>
                       <td className={`px-3 py-2 text-center font-mono ${
-                        qubit.eve_intercepted && qubit.eve_caused_error ? 'text-red-400 font-bold' : 'text-gray-500'
+                        qubit.eve_intercepted && qubit.eve_caused_error ? 'text-red-400 font-bold' : 'text-yellow-300'
                       }`}>
                         {qubit.eve_intercepted ? qubit.eve_basis : '-'}
                       </td>
