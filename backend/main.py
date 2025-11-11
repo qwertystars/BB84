@@ -96,7 +96,7 @@ async def get_scenarios():
         ScenarioInfo(
             id=ScenarioType.DECOHERENCE_FREE,
             name="Decoherence-Free Space",
-            description="Theoretical scenario where quantum coherence is preserved even with eavesdropping",
+            description="Theoretical scenario where quantum coherence is preserved from channel noise",
             parameters={
                 "qubit_count": {"default": 100, "min": 10, "max": 1000},
                 "error_rate": {"default": 0.0, "min": 0.0, "max": 0.0},
